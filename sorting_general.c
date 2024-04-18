@@ -8,7 +8,7 @@
 } while (0)
 
 typedef int (*CompareFunc_t)(const void *, const void *);
-typedef void (*SortAlg_t)(int *, int, CompareFunc_t);
+typedef void (*SortFunc_t)(int *, int, CompareFunc_t);
 
 /**
  * \brief Selection sort
@@ -30,7 +30,7 @@ void selectSort(int *nums, int numsSize, CompareFunc_t compar) {
 void insertSort(int *nums, int numsSize, CompareFunc_t compar) {
     for (int i = 1; i < numsSize; i++) {
         for (int j = 0; j < i; j++) {
-            if (compar(nums + j, nums + i) > 0) {
+            if (compar(nums + i, nums + j) < 0) {
                 SWAP(nums[i], nums[j]);
             }
         }
@@ -44,7 +44,7 @@ void bubbleSort(int *nums, int numsSize, CompareFunc_t compar) {
     if (numsSize > 1) {
         for (int i = 1; i < numsSize; i++) {
             if (compar(nums + i - 1, nums + i) > 0) {
-                SWAP(nums[i -1], nums[i]);
+                SWAP(nums[i - 1], nums[i]);
             }
         }
         bubbleSort(nums, numsSize - 1, compar);
@@ -89,13 +89,13 @@ void mergeSort(int *nums1, int m, int *nums2, int n, int *nums3, CompareFunc_t c
 /**
  * \brief Binary search
  */
-int binarySearch(int *nums, int numsSize, int target, CompareFunc_t compar) {
+int binarySearch(int *nums, int numsSize, int val, CompareFunc_t compar) {
     int i = 0, j = numsSize - 1, k;
     while (i <= j) {
         k = i + j >> 1;
-        if (compar(nums + k, &target) < 0) {
+        if (compar(nums + k, &val) < 0) {
             i = k + 1;
-        } else if (compar(nums + k, &target) > 0) {
+        } else if (compar(nums + k, &val) > 0) {
             j = k - 1;
         } else {
             return k;
@@ -108,7 +108,7 @@ int ascending(const void *a, const void *b) {
     return *(int *)a - *(int *)b;
 }
 
-int descinding(const void *a, const void *b) {
+int descending(const void *a, const void *b) {
     return *(int *)b - *(int *)a;
 }
 
@@ -127,51 +127,46 @@ int main() {
     struct {
         int nums1[10], nums1Size, nums2[10], nums2Size;
         CompareFunc_t compar;
-        SortAlg_t sort1, sort2;
-    } TestCase[] = {
-        {.nums1 = {3,1,5,0,7,6}, .nums1Size = 6, .nums2 = {8,4,2,9}, .nums2Size = 4,
+        SortFunc_t sort1, sort2;
+    } tc[] = {
+        {.nums1 = {5,0,4,7,3,9}, .nums1Size = 6, .nums2 = {6,1,8,2}, .nums2Size = 4,
          .compar = ascending, .sort1 = selectSort, .sort2 = insertSort},
-        {.nums1 = {2,5,9,0,7}, .nums1Size = 5, .nums2 = {6,1,3,8,4}, .nums2Size = 5,
-         .compar = descinding, .sort1 = bubbleSort, .sort2 = quickSort}};
-    int tcSize = sizeof(TestCase) / sizeof(TestCase[0]);
+        {.nums1 = {9,0,4}, .nums1Size = 3, .nums2 = {2,8,6,7,1,3,5}, .nums2Size = 7,
+         .compar = descending, .sort1 = bubbleSort, .sort2 = quickSort}};
+    int tcSize = sizeof(tc) / sizeof(tc[0]);
 
-    int *nums3, nums3Size, target, index;
-    printf("Enter a num to be searched: ");
-    scanf("%d", &target);
-
+    int *nums3, nums3Size, val, index;
     for (int i = 0; i < tcSize; i++) {
-        printf("\nTest case %d:\n", i + 1);
+        printf("Test case %d:\n", i + 1);
 
         // Sort nums1
-        printf("\n// Sort nums1\n");
-        printArray(TestCase[i].nums1, TestCase[i].nums1Size, "Original nums1");
-        TestCase[i].sort1(TestCase[i].nums1, TestCase[i].nums1Size, TestCase[i].compar);
-        printArray(TestCase[i].nums1, TestCase[i].nums1Size, "Sorted nums1");
+        printArray(tc[i].nums1, tc[i].nums1Size, "\nOriginal nums1");
+        tc[i].sort1(tc[i].nums1, tc[i].nums1Size, tc[i].compar);
+        printArray(tc[i].nums1, tc[i].nums1Size, "Sorted nums1");
 
         // Sort nums2
-        printf("\n// Sort nums2\n");
-        printArray(TestCase[i].nums2, TestCase[i].nums2Size, "Original nums2");
-        TestCase[i].sort2(TestCase[i].nums2, TestCase[i].nums2Size, TestCase[i].compar);
-        printArray(TestCase[i].nums2, TestCase[i].nums2Size, "Sorted nums2");
+        printArray(tc[i].nums2, tc[i].nums2Size, "\nOriginal nums2");
+        tc[i].sort2(tc[i].nums2, tc[i].nums2Size, tc[i].compar);
+        printArray(tc[i].nums2, tc[i].nums2Size, "Sorted nums2");
 
-        // Merge sort nums1 & nums2 to nums3
-        printf("\n// Merge sort nums1 & nums2 to nums3\n");
-        nums3Size = TestCase[i].nums1Size + TestCase[i].nums2Size;
+        // Merge sort num1 & nums2 to nums3
+        nums3Size = tc[i].nums1Size + tc[i].nums2Size;
         nums3 = (int *)malloc(nums3Size * sizeof(int));
-        mergeSort(TestCase[i].nums1, TestCase[i].nums1Size,
-                  TestCase[i].nums2, TestCase[i].nums2Size,
-                  nums3, TestCase[i].compar);
-        printArray(nums3, nums3Size, "nums3");
+        mergeSort(tc[i].nums1, tc[i].nums1Size, tc[i].nums2, tc[i].nums2Size,
+                  nums3, tc[i].compar);
+        printArray(nums3, nums3Size, "\nnums3");
 
         // Binary search
-        printf("\n// Search the index of input num in nums3\n");
-        index = binarySearch(nums3, nums3Size, target, TestCase[i].compar);
-        free(nums3);
+        printf("\nEnter a num to search: ");
+        scanf("%d", &val);
+        index = binarySearch(nums3, nums3Size, val, tc[i].compar);
         if (index != -1) {
-            printf("The index of %d in nums3 = %d\n", target, index);
+            printf("The index of %d in nums3 = %d\n\n", val, index);
         } else {
-            printf("%d is not exist in nums3.\n", target);
+            printf("%d not found in nums3.\n\n", val);
         }
+
+        free(nums3);
     }
 
     system("pause");
