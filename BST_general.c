@@ -17,7 +17,72 @@ typedef struct {
 } Queue_t;
 
 /**
- * \brief Search node
+ * \brief Insert a node to BST
+ */
+int insertNode(Node_t **root, int val) {
+    if (!*root) {
+        *root = (Node_t *)malloc(sizeof(Node_t));
+        (*root)->val = val;
+        (*root)->left = (*root)->right = NULL;
+        return 1;
+    }
+    if (val < (*root)->val) {
+        return insertNode(&(*root)->left, val);
+    }
+    if (val > (*root)->val) {
+        return insertNode(&(*root)->right, val);
+    }
+    return 0;
+}
+
+/**
+ * \brief Delete a node from BST
+ */
+int deleteNode(Node_t **root, int val) {
+    // 根結點為空，刪除節點失敗，返回0
+    if (!*root) {
+        return 0;
+    }
+
+    // 刪除數值小於或大於根結點資料域值，向左樹或右樹遞迴
+    if (val < (*root)->val) {
+        return deleteNode(&(*root)->left, val);
+    }
+    if (val > (*root)->val) {
+        return deleteNode(&(*root)->right, val);
+    }
+
+    // 左樹或右樹為空樹，刪除根結點並把另一邊的子樹遞補至根結點
+    Node_t *ret = *root;
+    if (!ret->left) {
+        *root = ret->right;
+        free(ret);
+        return 1;
+    }
+    if (!ret->right) {
+        *root = ret->left;
+        free(ret);
+        return 1;
+    }
+
+    // 左右子樹皆不為空樹，取左子樹的右葉節點作為新的根結點
+    Node_t *pre = NULL;
+    *root = ret->left;
+    while ((*root)->right) {
+        pre = *root;
+        *root = pre->right;
+    }
+    if (pre) {
+        pre->right = NULL;
+        (*root)->left = ret->left;
+    }
+    (*root)->right = ret->right;
+    free(ret);
+    return 1;
+}
+
+/**
+ * \brief Search node in BST
  */
 int searchNode(Node_t *root, int val) {
     if (!root) {
@@ -29,70 +94,6 @@ int searchNode(Node_t *root, int val) {
     if (val > root->val) {
         return searchNode(root->right, val);
     }
-    return 1;
-}
-
-/**
- * \brief Insert a node
- */
-void insertNode(Node_t **root, int val) {
-    Node_t *new = (Node_t *)malloc(sizeof(Node_t));
-    new->val = val;
-    new->left = new->right = NULL;
-    if (!*root) {
-        *root = new;        
-    }
-    if (val < (*root)->val) {
-        insertNode(&(*root)->left, val);
-    }
-    if (val > (*root)->val) {
-        insertNode(&(*root)->right, val);
-    }
-}
-
-/**
- * \brief Delete a node
- */
-int deleteNode(Node_t **root, int val) {
-    // 根結點為空，刪除節點失敗，返回0
-    if (!*root) {
-        return 0;
-    }
-
-    // 要刪除的值小於或大於根結點資料域的值，向左樹或右樹遞迴
-    if (val < (*root)->val) {
-        return deleteNode(&(*root)->left, val);
-    }
-    if (val > (*root)->val) {
-        return deleteNode(&(*root)->right, val);
-    }
-
-    // 左樹或右樹為空樹，則刪除根結點後，另一邊的子樹成為新的根結點
-    Node_t *temp = *root;
-    if (!temp->left) {
-        *root = temp->right;
-        free(temp);
-        return 1;
-    }
-    if (!temp->right) {
-        *root = temp->left;
-        free(temp);
-        return 1;
-    }
-
-    // 左樹及右樹皆不為空樹，取左樹的右葉節點作為新的根結點
-    Node_t *p = NULL;
-    *root = temp->left;
-    while ((*root)->right) {
-        p = *root;
-        *root = p->right;
-    }
-    if (p) {
-        p->right = NULL;
-        (*root)->left = temp->left;
-    }
-    (*root)->right = temp->right;
-    free(temp);
     return 1;
 }
 
@@ -116,10 +117,10 @@ int dequeue(Queue_t *q, Node_t **node) {
     if (!q->head) {
         return 0;
     }
-    QNode_t *temp = q->head;
-    *node = temp->node;
-    q->head = temp->next;
-    free(temp);
+    QNode_t *ret = q->head;
+    *node = ret->node;
+    q->head = ret->next;
+    free(ret);
     if (!q->head) {
         q->tail = NULL;
     }
@@ -128,22 +129,19 @@ int dequeue(Queue_t *q, Node_t **node) {
 
 void printTree(Node_t *root, char *name) {
     printf("%s = [", name);
-    if (root) {
-        Queue_t q = {NULL, NULL};
-        enqueue(&q, root);
-        Node_t *node;
-        while (dequeue(&q, &node)) {
-            if (node) {
-                printf("%d,", node->val);
-                enqueue(&q, node->left);
-                enqueue(&q, node->right);
-            } else {
-                printf("null,");
-            }
+    Queue_t q = {NULL, NULL};
+    enqueue(&q, root);
+    Node_t *node;
+    while (dequeue(&q, &node)) {
+        if (node) {
+            printf("%d,", node->val);
+            enqueue(&q, node->left);
+            enqueue(&q, node->right);
+        } else {
+            printf("null,");
         }
-        printf("\b");
     }
-    printf("]\n");
+    printf("\b]\n");
 }
 
 void freeTree(Node_t **root) {
@@ -156,31 +154,31 @@ void freeTree(Node_t **root) {
 }
 
 int main() {
-    int nums[] = {3,1,5,4,6,7,8,1,5,4};
+    int nums[] = {5,3,8,1,2,4,6,9};
     int numsSize = sizeof(nums) / sizeof(nums[0]);
 
-    // Build a BST
+    // Build BST
     Node_t *root = NULL;
     for (int i = 0; i < numsSize; i++) {
         insertNode(&root, nums[i]);
     }
     printTree(root, "Original BST");
 
+    int val;
+    printf("Enter a value to be deleted: ");
+    scanf("%d", &val);
+
     // Search node
-    int n;
-    printf("Enter a num: ");
-    scanf("%d", &n);
-    char *s = searchNode(root, n) ? "" : "not ";
-    printf("%d is %sin the BST.\n", n, s);
+    char *s = searchNode(root, val) ? "" : "not ";
+    printf("%d is %sin the BST.\n", val, s);
 
     // Delete node
-    s = deleteNode(&root, n) ? "succeeded" : "failed";
-    printf("Delete %d from BST %s.\n", n, s);
+    s = deleteNode(&root, val) ? "succeeded" : "failed";
+    printf("Delete %d in BST %s.\n", val, s);
     printTree(root, "New BST");
 
-    // Free tree
+    // Free free
     freeTree(&root);
-    printTree(root, "Freed tree");
 
     system("pause");
     return 0;
