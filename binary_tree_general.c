@@ -162,14 +162,13 @@ int main() {
     int tcSize = sizeof(tc) / sizeof(tc[0]);
 
     Node_t *root;
-    char *s, *addr1, *addr2;
+    char *s;
     for (int i = 0; i < tcSize; i++) {
         printf("Test case %d:\n", i + 1);
 
         // Build tree
         root = buildTree(tc[i].nums, tc[i].numsSize);
         printTree(root, "Original tree");
-        addr1 = (char *)root;
 
         // Invert tree
         invertTree(root);
@@ -177,16 +176,10 @@ int main() {
 
         // Check whether the tree is symmetric
         s = isSymmetric(root) ? "" : "not ";
-        printf("This tree is %ssymmetric.\n", s);
+        printf("This tree is %ssymmetric.\n\n", s);
 
         // Free tree
         freeTree(&root);
-
-        // Check whether memory leak occurs
-        addr2 = (char *)malloc(1);
-        s = addr1 != addr2 ? "M" : "No m";
-        printf("%semory leak occurs.\n\n", s);
-        free(addr2);
     }
 
     return 0;
