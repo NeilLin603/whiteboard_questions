@@ -46,22 +46,22 @@ void reverseList(Node_t **head) {
  * \brief Insert a node by value
  */
 void insertNodeByValue(Node_t **head, int val) {
-    Node_t *pre = NULL, *cur = *head;
-    while (cur) {
-        if (cur->val >= val) {
+    Node_t *pre = NULL, *next = *head;
+    while (next) {
+        if (next->val >= val) {
             break;
         }
-        pre = cur;
-        cur = cur->next;
+        pre = next;
+        next = pre->next;
     }
     Node_t *new = (Node_t *)malloc(sizeof(Node_t));
     new->val = val;
+    new->next = next;
     if (pre) {
         pre->next = new;
     } else {
         *head = new;
     }
-    new->next = cur;
 }
 
 /**
@@ -95,21 +95,21 @@ int deleteNodeByValue(Node_t **head, int val) {
  * \brief Insert a node by index
  */
 int insertNodeByIndex(Node_t **head, int val, int index) {
-    Node_t *pre = NULL, *cur = *head;
+    Node_t *pre = NULL, *next = *head;
     while (index--) {
-        if (!(pre = cur)) {
+        if (!(pre = next)) {
             return 0;
         }
-        cur = cur->next;
+        next = pre->next;
     }
     Node_t *new = (Node_t *)malloc(sizeof(Node_t));
     new->val = val;
+    new->next = next;
     if (pre) {
         pre->next = new;
     } else {
         *head = new;        
     }
-    new->next = cur;
     return 1;
 }
 
