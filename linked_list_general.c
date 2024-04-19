@@ -119,10 +119,10 @@ int insertNodeByIndex(Node_t **head, int val, int index) {
 int deleteNodeByIndex(Node_t **head, int *val, int index) {
     Node_t *pre = NULL, *cur = *head;
     while (index--) {
-        if (!(pre = cur)) {
+        pre = cur;
+        if (!(cur = cur->next)) {
             return 0;
         }
-        cur = cur->next;
     }
     *val = cur->val;
     if (pre) {
