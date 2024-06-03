@@ -1,12 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SWAP(a, b) do { \
-    (a) ^= (b); \
-    (b) ^= (a); \
-    (a) ^= (b); \
-} while (0)
-
 typedef struct ListNode {
     int val;
     struct ListNode *next;
@@ -15,16 +9,33 @@ typedef struct ListNode {
 /**
  * \brief Sort list
  */
-void sortList(Node_t *head) {
-    if (head) {
-        Node_t *cur = head->next;
-        while (cur) {
-            if (cur->val < head->val) {
-                SWAP(cur->val, head->val);
-            }
-            cur = cur->next;
+Node_t *merge(Node_t *l1, Node_t *l2) {
+    if (!l1) {
+        return l2;
+    }
+    if (!l2) {
+        return l1;
+    }
+    if (l1->val < l2->val) {
+        l1->next = merge(l1->next, l2);
+        return l1;
+    }
+    l2->next = merge(l1, l2->next);
+    return l2;
+}
+
+void mergeSort(Node_t **head) {
+    if (*head && (*head)->next) {
+        Node_t *slow = *head, *fast = (*head)->next;
+        while (fast->next && fast->next->next) {
+            slow = slow->next;
+            fast = fast->next->next;
         }
-        sortList(head->next);
+        fast = slow->next;
+        slow->next = NULL;
+        mergeSort(head);
+        mergeSort(&fast);
+        *head = merge(*head, fast);
     }
 }
 
@@ -168,7 +179,7 @@ int main() {
     printList(head, "Original list");
 
     // Sort list
-    sortList(head);
+    mergeSort(head);
     printList(head, "Sorted list");
 
     // Insert a node by value
