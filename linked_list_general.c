@@ -111,6 +111,9 @@ int insertNodeByIndex(Node_t **head, int val, int index) {
  * \brief Delete a node by index
  */
 int deleteNodeByIndex(Node_t **head, int *val, int index) {
+    if (!*head) {
+        return 0;
+    }
     Node_t *pre = NULL, *cur = *head;
     while (index--) {
         pre = cur;
