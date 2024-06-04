@@ -7,23 +7,28 @@ typedef struct ListNode {
 } Node_t;
 
 /**
- * \brief Sort list
+ * \brief Merge to sorted list.
  */
-Node_t *merge(Node_t *l1, Node_t *l2) {
-    if (!l1) {
-        return l2;
+void merge(Node_t **l1, Node_t *l2) {
+    if (!*l1) {
+        *l1 = l2;
+        return;
     }
-    if (!l2) {
-        return l1;
+    if (l2) {
+        if ((*l1)->val < l2->val) {
+            merge(&l2, (*l1)->next);
+            (*l1)->next = l2;
+        } else {
+            merge(l1, l2->next);
+            l2->next = *l1;
+            *l1 = l2;
+        }
     }
-    if (l1->val < l2->val) {
-        l1->next = merge(l1->next, l2);
-        return l1;
-    }
-    l2->next = merge(l1, l2->next);
-    return l2;
 }
 
+/**
+ * \brief Merge sort a list.
+ */
 void mergeSort(Node_t **head) {
     if (*head && (*head)->next) {
         Node_t *slow = *head, *fast = (*head)->next;
@@ -35,7 +40,7 @@ void mergeSort(Node_t **head) {
         slow->next = NULL;
         mergeSort(head);
         mergeSort(&fast);
-        *head = merge(*head, fast);
+        merge(head, fast);
     }
 }
 
@@ -43,12 +48,12 @@ void mergeSort(Node_t **head) {
  * \brief Reverse list
  */
 void reverseList(Node_t **head) {
-    Node_t *pre = NULL, *next;
-    while (*head) {
-        next = (*head)->next;
-        (*head)->next = pre;
-        pre = *head;
-        *head = next;
+    Node_t *pre = NULL, *cur = *head, *next;
+    while (cur) {
+        next = cur->next;
+        cur->next = pre;
+        pre = cur;
+        cur = next;
     }
     *head = pre;
 }
@@ -142,13 +147,13 @@ int deleteNodeByIndex(Node_t **head, int *val, int index) {
     return 1;
 }
 
-Node_t *createList(int *nums, int numsSize) {
-    if (!numsSize) {
+Node_t *createList(int *vals, int valsSize) {
+    if (!valsSize) {
         return NULL;
     }
     Node_t *head = (Node_t *)malloc(sizeof(Node_t));
-    head->val = *nums;
-    head->next = createList(nums + 1, numsSize - 1);
+    head->val = *vals;
+    head->next = createList(vals + 1, valsSize - 1);
     return head;
 }
 
