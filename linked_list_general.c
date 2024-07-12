@@ -9,38 +9,36 @@ typedef struct ListNode {
 /**
  * \brief Merge to sorted list.
  */
-void merge(Node_t **l1, Node_t *l2) {
-    if (!*l1) {
-        *l1 = l2;
-        return;
+static Node_t *merge(Node_t *l1, Node_t *l2) {
+    if (!l1) {
+        return l2;
     }
-    if (l2) {
-        if ((*l1)->val < l2->val) {
-            merge(&l2, (*l1)->next);
-            (*l1)->next = l2;
-        } else {
-            merge(l1, l2->next);
-            l2->next = *l1;
-            *l1 = l2;
-        }
+    if (!l2) {
+        return l1;
     }
+    if (l1->val < l2->val) {
+        l1->next = merge(l1->next, l2);
+        return l1;
+    }
+    l2->next = merge(l1, l2->next);
+    return l2;
 }
 
 /**
  * \brief Merge sort a list.
  */
-void mergeSort(Node_t **head) {
+void sortList(Node_t **head) {
     if (*head && (*head)->next) {
-        Node_t *slow = *head, *fast = (*head)->next;
+        Node_t *slow = *head, *fast = slow->next;
         while (fast->next && fast->next->next) {
             slow = slow->next;
             fast = fast->next->next;
         }
         fast = slow->next;
         slow->next = NULL;
-        mergeSort(head);
-        mergeSort(&fast);
-        merge(head, fast);
+        sortList(head);
+        sortList(&fast);
+        *head = merge(*head, fast);
     }
 }
 
@@ -107,10 +105,11 @@ int deleteNodeByValue(Node_t **head, int val) {
 int insertNodeByIndex(Node_t **head, int val, int index) {
     Node_t *pre = NULL, *next = *head;
     while (index--) {
-        if (!(pre = next)) {
+        if (!next) {
             return 0;
         }
-        next = pre->next;
+        pre = next;
+        next = next->next;
     }
     Node_t *new = (Node_t *)malloc(sizeof(Node_t));
     new->val = val;
@@ -132,10 +131,11 @@ int deleteNodeByIndex(Node_t **head, int *val, int index) {
     }
     Node_t *pre = NULL, *cur = *head;
     while (index--) {
-        pre = cur;
-        if (!(cur = cur->next)) {
+        if (!cur->next) {
             return 0;
         }
+        pre = cur;
+        cur = cur->next;
     }
     *val = cur->val;
     if (pre) {
@@ -184,7 +184,7 @@ int main() {
     printList(head, "Original list");
 
     // Sort list
-    mergeSort(head);
+    sortList(&head);
     printList(head, "Sorted list");
 
     // Insert a node by value
