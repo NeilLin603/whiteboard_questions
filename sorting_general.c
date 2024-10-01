@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SWAP(a, b) do { \
-    (a) ^= (b); \
-    (b) ^= (a); \
-    (a) ^= (b); \
-} while (0)
+#define SWAP(a, b)                                                             \
+    (a) ^= (b);                                                                \
+    (b) ^= (a);                                                                \
+    (a) ^= (b)
 
 typedef int (*CompareFunc_t)(const void *, const void *);
 typedef void (*SortFunc_t)(int *, int, CompareFunc_t);
@@ -14,13 +13,13 @@ typedef void (*SortFunc_t)(int *, int, CompareFunc_t);
  * \brief Selection sort
  */
 void selectSort(int *nums, int numsSize, CompareFunc_t compar) {
-    if (numsSize > 1) {
-        for (int i = 1; i < numsSize; i++) {
+    while (numsSize-- > 1) {
+        for (int i = 1; i <= numsSize; i++) {
             if (compar(nums, nums + i) > 0) {
-                SWAP(*nums, nums[i]);
+                SWAP(*nums, *(nums + i));
             }
         }
-        selectSort(nums + 1, numsSize - 1, compar);
+        nums++;
     }
 }
 
@@ -28,10 +27,10 @@ void selectSort(int *nums, int numsSize, CompareFunc_t compar) {
  * \brief Insertion sort
  */
 void insertSort(int *nums, int numsSize, CompareFunc_t compar) {
-    for (int i = 1; i < numsSize; i++) {
-        for (int j = 0; j < i; j++) {
-            if (compar(nums + i, nums + j) < 0) {
-                SWAP(nums[i], nums[j]);
+    for (int j = 1; j < numsSize; j++) {
+        for (int i = 0; i < j; i++) {
+            if (compar(nums + i, nums + j) > 0) {
+                SWAP(*(nums + i), *(nums + j));
             }
         }
     }
@@ -41,13 +40,12 @@ void insertSort(int *nums, int numsSize, CompareFunc_t compar) {
  * \brief Bubble sort
  */
 void bubbleSort(int *nums, int numsSize, CompareFunc_t compar) {
-    if (numsSize > 1) {
-        for (int i = 1; i < numsSize; i++) {
-            if (compar(nums + i - 1, nums + i) > 0) {
-                SWAP(nums[i - 1], nums[i]);
+    while (--numsSize) {
+        for (int i = 0; i < numsSize; i++) {
+            if (compar(nums + i, nums + i + 1) > 0) {
+                SWAP(*(nums + i), *(nums + i + 1));
             }
         }
-        bubbleSort(nums, numsSize - 1, compar);
     }
 }
 
