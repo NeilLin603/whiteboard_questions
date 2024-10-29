@@ -1,21 +1,71 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
-#define SWAP(a, b)                                                             \
-    (a) ^= (b);                                                                \
-    (b) ^= (a);                                                                \
-    (a) ^= (b)
+//!*****************************************************************************
+//! General functions
+//!*****************************************************************************
+/**
+ * \brief Memory copy function
+ */
+void memCpy(int *dst, const int *src, int numsSize) {
+    while (numsSize--) {
+        *(dst + numsSize) = *(src + numsSize);
+    }
+}
+
+/**
+ * \brief Print array function
+ */
+void printArray(const int *nums, int numsSize, const char *title) {
+    printf("%s = [", title);
+    if (numsSize) {
+        printf("%d", *nums);
+        for (int i = 1; i < numsSize; i++) {
+            printf(",%d", *(nums + i));
+        }
+    }
+    printf("]\n");
+}
+
+//!*****************************************************************************
+//! Compare functions
+//!*****************************************************************************
+/**
+ * \brief Ascending order compare function
+ */
+int ascending(const void *a, const void *b) {
+    return *(int *)a - *(int *)b;
+}
+
+/**
+ * \brief Descending order compare function
+ */
+int descending(const void *a, const void *b) {
+    return *(int *)b - *(int *)a;
+}
 
 typedef int (*CompareFunc_t)(const void *, const void *);
+
+//!*****************************************************************************
+//! Sorting algorithms
+//!*****************************************************************************
+/**
+ * \brief Macro to swap values of two variables
+ */
+#define SWAP(a, b)                                                             \
+    *(a) ^= *(b);                                                              \
+    *(b) ^= *(a);                                                              \
+    *(a) ^= *(b)
 
 /**
  * \brief Selection sort
  */
 void selectSort(int *nums, int numsSize, CompareFunc_t compar) {
-    while (numsSize-- > 1) {
+    while (--numsSize) {
         for (int i = 1; i <= numsSize; i++) {
             if (compar(nums, nums + i) > 0) {
-                SWAP(*nums, *(nums + i));
+                SWAP(nums, nums + i);
             }
         }
         nums++;
@@ -29,7 +79,7 @@ void insertSort(int *nums, int numsSize, CompareFunc_t compar) {
     for (int j = 1; j < numsSize; j++) {
         for (int i = 0; i < j; i++) {
             if (compar(nums + i, nums + j) > 0) {
-                SWAP(*(nums + i), *(nums + j));
+                SWAP(nums + i, nums + j);
             }
         }
     }
@@ -42,7 +92,7 @@ void bubbleSort(int *nums, int numsSize, CompareFunc_t compar) {
     while (--numsSize) {
         for (int i = 0; i < numsSize; i++) {
             if (compar(nums + i, nums + i + 1) > 0) {
-                SWAP(*(nums + i), *(nums + i + 1));
+                SWAP(nums + i, nums + i + 1);
             }
         }
     }
@@ -53,39 +103,17 @@ void bubbleSort(int *nums, int numsSize, CompareFunc_t compar) {
  */
 void quickSort(int *nums, int numsSize, CompareFunc_t compar) {
     if (numsSize > 1) {
-        int i = -1, j = numsSize, k = numsSize >> 1;
+        int i = -1, j = numsSize, s = *(nums + (numsSize >> 1));
         for (;;) {
-            while (compar(nums + ++i, nums + k) < 0);
-            while (compar(nums + --j, nums + k) > 0);
+            while (compar(nums + ++i, &s) < 0);
+            while (compar(nums + --j, &s) > 0);
             if (i >= j) {
                 break;
             }
-            SWAP(*(nums + i), *(nums + j));
+            SWAP(nums + i, nums + j);
         }
-        quickSort(nums, i, compar);
+        quickSort(nums, i , compar);
         quickSort(nums + j + 1, numsSize - j - 1, compar);
-    }
-}
-
-/**
- * \brief Memory copy function.
- */
-void memCpy(int *dst, const int *src, int numsSize) {
-    while (numsSize--) {
-        *(dst + numsSize) = *(src + numsSize);
-    }
-}
-
-/**
- * \brief The subfunction of mergeSort().
- */
-void merge(int *nums1, int m, int *nums2, int n, CompareFunc_t compar) {
-    while (m && n) {
-        *(nums1 + m + n) = compar(nums1 + m - 1, nums2 + n - 1) > 0 ?
-                           *(nums1 + --m) : *(nums2 + --n);
-    }
-    while (n) {
-        *(nums1 + n) = *(nums2 + --n);
     }
 }
 
@@ -94,29 +122,39 @@ void merge(int *nums1, int m, int *nums2, int n, CompareFunc_t compar) {
  */
 void mergeSort(int *nums, int numsSize, CompareFunc_t compar) {
     if (numsSize > 1) {
-        int nums2Size = numsSize >> 1;
-        numsSize -= nums2Size;
-        int *nums2 = (int *)malloc(sizeof(int) * nums2Size);
-        memCpy(nums2, nums + numsSize, nums2Size);
+        int n = numsSize >> 1, m = numsSize - n,
+            *nums2 = (int *)malloc(sizeof(int) * n);
+        memCpy(nums2, nums + m, n);
+        mergeSort(nums, m, compar);
+        mergeSort(nums2, n, compar);
 
-        mergeSort(nums, numsSize, compar);
-        mergeSort(nums2, nums2Size, compar);
+        // Merge two nums array
+        while (m && n) {
+            *(nums + --numsSize) = compar(nums + m - 1, nums2 + n - 1) > 0 ?
+                                   *(nums + --m) : *(nums2 + --n);
+        }
+        while (n--) {
+            *(nums + n) = *(nums2 + n);
+        }
 
-        merge(nums, numsSize, nums2, nums2Size, compar);
         free(nums2);
     }
 }
 
+//!*****************************************************************************
+//! Binary search function
+//!*****************************************************************************
 /**
  * \brief Binary search
  */
-int binarySearch(int *nums, int numsSize, int val, CompareFunc_t compar) {
+int binarySearch(const int *nums, int numsSize, int target,
+                 CompareFunc_t compar) {
     int i = 0, j = numsSize - 1, k;
     while (i <= j) {
         k = i + j >> 1;
-        if (compar(nums + k, &val) < 0) {
+        if (compar(nums + k, &target) < 0) {
             i = k + 1;
-        } else if (compar(nums + k, &val) > 0) {
+        } else if (compar(nums + k, &target) > 0) {
             j = k - 1;
         } else {
             return k;
@@ -125,70 +163,75 @@ int binarySearch(int *nums, int numsSize, int val, CompareFunc_t compar) {
     return -1;
 }
 
-int ascending(const void *a, const void *b) {
-    return *(int *)a - *(int *)b;
-}
-
-int descending(const void *a, const void *b) {
-    return *(int *)b - *(int *)a;
-}
-
-void printArray(int *nums, int numsSize, char *name) {
-    printf("%s = [", name);
-    if (numsSize) {
-        printf("%d", *nums);
-        while (--numsSize) {
-            printf(",%d", *++nums);
-        }
-    }
-    printf("]\n");
-}
+//!*****************************************************************************
+//! Main function
+//!*****************************************************************************
+#define NUMS_SIZE 10  // Size of the test array
+#define NUMS_MAX  100 // Maximum value of the test array
 
 int main() {
-    // Assign the compare function for sorting order
-    CompareFunc_t compar = ascending;
-    // CompareFunc_t compar = descending;
+    srand(time(NULL)); // Set random seed to time
 
-    // Initialize an array
-    int nums[] = {5,1,0,9,7,8,3,9,4,6,2},
-        numsSize = sizeof(nums) / sizeof(nums[0]);
-    printArray(nums, numsSize, "Original");
+    //--------------------------------------------------------------------------
+    // Sorting order
+    //--------------------------------------------------------------------------
+    struct {
+        CompareFunc_t compar;
+        char *name;
+    } Ords[] = {
+        {.compar = ascending, .name = "ascending"},
+        {.compar = descending, .name = "descending"}
+    };
+    int ordsSize = sizeof(Ords) / sizeof(Ords[0]);
 
-    // Array for reset
-    int *numsReset = (int *)malloc(sizeof(int) * numsSize);
-    memCpy(numsReset, nums, numsSize);
+    //--------------------------------------------------------------------------
+    // Sorting approach
+    //--------------------------------------------------------------------------
+    struct {
+        void (*func)(int *, int, CompareFunc_t);
+        char *name;
+    } Algs[] = {
+        {.func = selectSort, .name = "Selection sort"},
+        {.func = insertSort, .name = "Insertion sort"},
+        {.func = bubbleSort, .name = "Bubble sort"},
+        {.func = quickSort, .name = "Quick sort"},
+        {.func = mergeSort, .name = "Merge sort"}
+    };
+    int algsSize = sizeof(Algs) / sizeof(Algs[0]);
 
-    // Select sort
-    selectSort(nums, numsSize, compar);
-    printArray(nums, numsSize, "Selection sorted");
+    //--------------------------------------------------------------------------
+    // Functional tests
+    //--------------------------------------------------------------------------
+    // Init array
+    int reset[NUMS_SIZE], nums[NUMS_SIZE];
+    for (int i = 0; i < NUMS_SIZE; i++) {
+        reset[i] = rand() % NUMS_MAX;
+    }
+    printArray(reset, NUMS_SIZE, "Original");
 
-    // Insertion sort
-    memCpy(nums, numsReset, numsSize); // Reset nums
-    insertSort(nums, numsSize, compar);
-    printArray(nums, numsSize, "Insertion sorted");
+    char s[256]; // Character array for storing strings
+    int input, index;
 
-    // Bubble sort
-    memCpy(nums, numsReset, numsSize); // Reset nums
-    bubbleSort(nums, numsSize, compar);
-    printArray(nums, numsSize, "Bubble sorted");
+    // Test for each algorithm
+    for (int i = 0; i < ordsSize; i++) {
+        for (int j = 0; j < algsSize; j++) {
+            memCpy(nums, reset, NUMS_SIZE); // Reset nums
+            Algs[j].func(nums, NUMS_SIZE, Ords[i].compar); // Sort nums
+            sprintf(s, "%sed by %s order", Algs[j].name, Ords[i].name);
+            printArray(nums, NUMS_SIZE, s);
+        }
 
-    // Quick sort
-    memCpy(nums, numsReset, numsSize); // Reset nums
-    quickSort(nums, numsSize, compar);
-    printArray(nums, numsSize, "Quick sorted");
+        // Test for binary search
+        printf("Enter a number to be searched: ");
+        scanf("%d", &input);
+        index = binarySearch(nums, NUMS_SIZE, input, Ords[i].compar);
+        if (index != -1) {
+            printf("Index of %d = %d\n\n", input, index);
+        } else {
+            printf("%d is not exist in nums.\n\n", input);
+        }
+    }
 
-    // Merge sort
-    memCpy(nums, numsReset, numsSize); // Reset nums
-    mergeSort(nums, numsSize, compar);
-    printArray(nums, numsSize, "Merge sorted");
-
-    // Binary search
-    int input;
-    printf("Enter a number to be searched: ");
-    scanf("%d", &input);
-    printf("Index of %d = %d\n", input,
-           binarySearch(nums, numsSize, input, compar));
-
-    free(numsReset);
+    system("pause");
     return 0;
 }
